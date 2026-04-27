@@ -9,8 +9,10 @@ class Portfolio(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     titulo_projeto = models.CharField(max_length=200)
+    nome_exibicao = models.CharField(max_length=100, blank=True, null=True)
     slug = models.SlugField(unique=True)
     date_added = models.DateTimeField(auto_now_add=True)
+    cor_fundo = models.CharField(max_length=7, default="#f8f9fa")
 
     def __str__(self):
         return self.titulo_projeto
@@ -22,6 +24,8 @@ class ContentSection(models.Model):
     conteudo = models.TextField(help_text="Aqui entra o seu texto (futuro markdown)")
 
     ordem = models.PositiveIntegerField(default=0)
+
+    cor_bloco = models.CharField(max_length=7, default="#ffffff")
 
     class Meta:
         ordering = ['ordem']
