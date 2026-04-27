@@ -5,21 +5,22 @@ from django.forms import inlineformset_factory
 class PortfolioForm(forms.ModelForm):
     class Meta:
         model = Portfolio
-        fields = ['titulo_projeto', 'nome_exibicao']
-        # widgets = {
-        #     # Torna o título e o slug invisíveis no HTML
-        #     'titulo_projeto': forms.HiddenInput(),
-        #     'slug': forms.HiddenInput(),
-        #     # Mantém o seletor de cor
-        #     'cor_fundo': forms.TextInput(attrs={'type': 'color', 'class': 'form-control-color'}),
-        # }
+        fields = ['titulo_projeto', 'nome_exibicao','cor_header', 'cor_nav', 'cor_footer', 'cor_fundo']
+
+        widgets = {
+            # 'titulo_projeto': forms.HiddenInput(),
+            'slug': forms.HiddenInput(),
+            'cor_fundo': forms.TextInput(attrs={'type': 'color', 'class': 'form-control-color'}),
+            'cor_header': forms.TextInput(attrs={'type': 'color', 'class': 'form-control-color'}),
+            'cor_nav': forms.TextInput(attrs={'type': 'color', 'class': 'form-control-color'}),
+            'cor_footer': forms.TextInput(attrs={'type': 'color', 'class': 'form-control-color'}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Dizemos ao Django que o slug não é obrigatório NO FORMULÁRIO
-        # (mas ele continua sendo obrigatório no Banco de Dados)
         if 'slug' in self.fields:
             self.fields['slug'].required = False
+        self.instance.slug = "temp-slug"
 
 class ContentSectionForm(forms.ModelForm):
     class Meta:

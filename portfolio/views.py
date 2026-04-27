@@ -2,6 +2,7 @@ from urllib import request
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.text import slugify
+import uuid
 
 from .forms import PortfolioForm, SectionFormSet
 from portfolio.models import Portfolio
@@ -39,7 +40,11 @@ def novo_portfolio(request):
         if form.is_valid():
             portfolio = form.save(commit=False)
             portfolio.usuario = request.user
-            portfolio.slug = slugify(portfolio.titulo_projeto)
+            base_slug = slugify(portfolio.titulo_projeto)
+            slug = base_slug
+            if Portfolio.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{str(uuid.uuid4())[:4]}"
+            portfolio.slug = slug
             if not portfolio.cor_fundo:
                 portfolio.cor_fundo = "#f8f9fa"
             portfolio.save()
@@ -78,10 +83,7 @@ def editar_portfolio(request, pk):
         form = PortfolioForm(request.POST, instance=portfolio)
         formset = SectionFormSet(request.POST, instance=portfolio)
 
-        form_valido = form.is_valid()
-        formset_valido = formset.is_valid()
-
-        if form.is_valid():
+        if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
             print("SALVO")
@@ -97,3 +99,12 @@ def editar_portfolio(request, pk):
     context = {'form':form, 'portfolio':portfolio, 'formset':formset, 'edit_mode':True}
 
     return render(request, 'portfolio/visualizar.html', context)
+
+@login_required
+def excluir_portfolio(request, pk):
+    portfolio = get_object_or_404(Portfolio, pk=pk, usuario=request.user)
+
+    if request.method == 'POST':
+        portfolio.delete()
+        return redirect('dashboard')
+    return redirect('dashboard')

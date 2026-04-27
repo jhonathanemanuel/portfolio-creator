@@ -13,6 +13,9 @@ class Portfolio(models.Model):
     slug = models.SlugField(unique=True)
     date_added = models.DateTimeField(auto_now_add=True)
     cor_fundo = models.CharField(max_length=7, default="#f8f9fa")
+    cor_header = models.CharField(max_length=7, default="#2c3e50")
+    cor_nav = models.CharField(max_length=7, default="#34495e")
+    cor_footer = models.CharField(max_length=7, default="#212529")
 
     def __str__(self):
         return self.titulo_projeto

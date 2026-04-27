@@ -9,4 +9,5 @@ urlpatterns = [
     path('p/<slug:slug>/', views.detalhe_portifolio, name='visualizar_portfolio'),
     path('editar/<int:pk>/', views.editar_portfolio, name='editar_portfolio'),
     path('dashboard/editar-titulo/<int:pk>/', views.editar_titulo_dashboard, name='editar_titulo_dashboard'),
+    path('dashboard/excluir/<int:pk>/', views.excluir_portfolio, name='excluir_portfolio'),
 ]
