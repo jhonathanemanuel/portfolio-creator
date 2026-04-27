@@ -1,0 +1,21 @@
+{% extends "portfolio/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4">{{ portfolio.titulo_projeto }}</h1>
+            <p class="lead text-muted">Criado por: {{ portfolio.usuario.username }}</p>
+            <hr>
+            
+            <div class="my-5">
+                <h3>Bem-vindo ao meu portfólio!</h3>
+                <p>Aqui você pode listar as redes sociais, projetos e experiências.</p>
+                <p>Link do projeto: <a href="#">www.exemplo.com</a></p>
+            </div>
+
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar ao Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

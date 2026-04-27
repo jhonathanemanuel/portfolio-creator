@@ -1,0 +1,13 @@
+{% extends "portfolio/base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>🚀 Criar Novo Portfólio</h2>
+    <form method="post" class="card p-4 shadow">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <button type="submit" class="btn btn-primary">Criar Card</button>
+    </form>
+</div>
+{% endblock %}

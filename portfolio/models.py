@@ -4,7 +4,9 @@ from django.contrib.auth.models import User
 class Portfolio(models.Model):
     """"Üm portifolio do usuário"""
 
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="portfolios")
+    # usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="portfolios")
+
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     titulo_projeto = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
