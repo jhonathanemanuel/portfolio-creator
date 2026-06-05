@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 class Portfolio(models.Model):
     """"Üm portifolio do usuário"""
@@ -35,3 +36,25 @@ class ContentSection(models.Model):
 
     def __str__(self):
         return f"{self.titulo_secao} - {self.portfolio.titulo_projeto}"
+
+
+class Pessoal(models.Model):
+    # Vincula o perfil ao usuário do Django de forma segura
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='perfil',
+        null=True,
+        blank=True
+    )
+    nome = models.CharField(max_length=200)
+    descricao = models.TextField(blank=True)
+    curso = models.CharField(max_length=200)
+    periodo = models.CharField(max_length=50)
+    email = models.EmailField()
+    git = models.URLField(blank=True)
+    linked = models.URLField(blank=True)
+    url_imagem = models.URLField(blank=True)
+
+    def __str__(self):
+        return self.nome

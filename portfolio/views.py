@@ -1,4 +1,3 @@
-from urllib import request
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.text import slugify
@@ -9,9 +8,16 @@ from portfolio.models import Portfolio
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .models import Pessoal
+from .serializers import PessoalSerializer
+
 
 def index(request):
-    return render(request,'portfolio/index.html')
+    # Pega o primeiro perfil do banco (ou cria um básico se estiver vazio)
+    perfil = Pessoal.objects.first()
+    return render(request, 'portfolio/index.html', {'perfil': perfil})
 
 @login_required
 def dashboard(request):
@@ -108,3 +114,16 @@ def excluir_portfolio(request, pk):
         portfolio.delete()
         return redirect('dashboard')
     return redirect('dashboard')
+
+
+class PerfilDetail(generics.RetrieveUpdateAPIView):
+    serializer_class = PessoalSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        # Busca o perfil do usuário dono do Token JWT; se não existir, cria um básico
+        perfil, created = Pessoal.objects.get_or_create(
+            usuario=self.request.user,
+            defaults={'nome': self.request.user.username}
+        )
+        return perfil

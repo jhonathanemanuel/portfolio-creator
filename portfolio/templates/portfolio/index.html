@@ -15,6 +15,16 @@
             padding: 100px 0;
         }
         .navbar-brand { font-weight: bold; }
+
+        /* Ajuste simples para a imagem do perfil do estudante */
+        .img-perfil {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -39,11 +49,29 @@
 
     <header class="hero-section text-center">
         <div class="container">
-            <h1 class="display-3 fw-bold">Seu portfólio em minutos.</h1>
-            <p class="lead mb-4">Organize seus projetos em blocos, edite com facilidade e compartilhe seu link profissional.</p>
-            {% if not user.is_authenticated %}
-                <a href="#" class="btn btn-lg btn-success">Começar Agora Grátis</a>
+            {% if perfil %}
+                {% if perfil.url_imagem %}
+                    <img src="{{ perfil.url_imagem }}" alt="Foto de {{ perfil.nome }}" class="img-perfil">
+                {% endif %}
+                <h1 class="display-3 fw-bold">{{ perfil.nome }}</h1>
+                <p class="lead mb-2">🎓 {{ perfil.curso }} - {{ perfil.periodo }}</p>
+                <p class="mb-4" style="max-width: 600px; margin: 0 auto; opacity: 0.9;">{{ perfil.descricao }}</p>
+
+                <div class="mb-4">
+                    {% if perfil.email %}<a href="mailto:{{ perfil.email }}" class="btn btn-sm btn-outline-light me-2">✉️ E-mail</a>{% endif %}
+                    {% if perfil.git %}<a href="{{ perfil.git }}" target="_blank" class="btn btn-sm btn-outline-light me-2">🐙 GitHub</a>{% endif %}
+                    {% if perfil.linked %}<a href="{{ perfil.linked }}" target="_blank" class="btn btn-sm btn-outline-light">💼 LinkedIn</a>{% endif %}
+                </div>
+            {% else %}
+                <h1 class="display-3 fw-bold">Seu portfólio em minutos.</h1>
+                <p class="lead mb-4">Organize seus projetos em blocos, edite com facilidade e compartilhe seu link profissional.</p>
             {% endif %}
+
+            <div class="mt-3">
+                <button id="btn-editar" class="btn btn-info font-weight-bold shadow-sm">
+                    ⚙️ Editar Informações (via API)
+                </button>
+            </div>
         </div>
     </header>
 
@@ -76,6 +104,161 @@
         <p class="text-muted">&copy; 2026 DevShowcase - Criado com Django & Postgres</p>
     </footer>
 
+    <div id="modal-login" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000;">
+        <div class="card shadow" style="max-width: 400px; margin: 100px auto; border-radius: 10px;">
+            <div class="card-body p-4">
+                <h4 class="card-title text-center mb-3 text-dark">Chave da API Requerida</h4>
+                <p class="text-muted small text-center">Faça autenticação para receber seu Token JWT seguro.</p>
+                <div class="mb-3">
+                    <label class="form-label text-dark">Usuário:</label>
+                    <input type="text" id="login-username" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-dark">Senha:</label>
+                    <input type="password" id="login-password" class="form-control">
+                </div>
+                <div id="login-erro" class="alert alert-danger small py-2" style="display: none;"></div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button id="btn-cancelar-login" class="btn btn-secondary btn-sm">Cancelar</button>
+                    <button id="btn-login" class="btn btn-success btn-sm">Obter Token</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-editar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; overflow-y: auto;">
+        <div class="card shadow my-5" style="max-width: 500px; margin: 0 auto; border-radius: 10px;">
+            <div class="card-body p-4 text-dark">
+                <h4 class="card-title text-center mb-4">Editar Dados do Perfil</h4>
+                <div class="mb-2"><label class="form-label mb-0 small">Nome:</label><input type="text" id="edit-nome" class="form-control form-control-sm"></div>
+                <div class="mb-2"><label class="form-label mb-0 small">Descrição:</label><textarea id="edit-descricao" rows="2" class="form-control form-control-sm"></textarea></div>
+                <div class="mb-2"><label class="form-label mb-0 small">Curso:</label><input type="text" id="edit-curso" class="form-control form-control-sm"></div>
+                <div class="mb-2"><label class="form-label mb-0 small">Período:</label><input type="text" id="edit-periodo" class="form-control form-control-sm"></div>
+                <div class="mb-2"><label class="form-label mb-0 small">E-mail:</label><input type="email" id="edit-email" class="form-control form-control-sm"></div>
+                <div class="mb-2"><label class="form-label mb-0 small">GitHub URL:</label><input type="url" id="edit-git" class="form-control form-control-sm"></div>
+                <div class="mb-2"><label class="form-label mb-0 small">LinkedIn URL:</label><input type="url" id="edit-linked" class="form-control form-control-sm"></div>
+                <div class="mb-3"><label class="form-label mb-0 small">URL da Imagem:</label><input type="url" id="edit-url_imagem" class="form-control form-control-sm"></div>
+
+                <div id="edit-sucesso" class="alert alert-success small py-2" style="display: none;">✓ Sincronizado! Atualizando página...</div>
+                <div id="edit-erro" class="alert alert-danger small py-2" style="display: none;"></div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button id="btn-cancelar-editar" class="btn btn-secondary btn-sm">Fechar</button>
+                    <button id="btn-salvar" class="btn btn-success btn-sm">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    const API_BASE = window.location.origin;
+    const btnEditar = document.getElementById('btn-editar');
+    const modalLogin = document.getElementById('modal-login');
+    const modalEditar = document.getElementById('modal-editar');
+
+    // Ao clicar no botão Editar
+    btnEditar.addEventListener('click', function() {
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            carregarPerfil(token);
+        } else {
+            modalLogin.style.display = 'block';
+        }
+    });
+
+    // Submissão do Formulário de Login (Dispara POST para obter o Token JWT)
+    document.getElementById('btn-login').addEventListener('click', function() {
+        const user = document.getElementById('login-username').value;
+        const pass = document.getElementById('login-password').value;
+        const erroDiv = document.getElementById('login-erro');
+        erroDiv.style.display = 'none';
+
+        fetch(API_BASE + '/api/token/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, password: pass })
+        })
+        .then(res => { if (!res.ok) throw new Error('Credenciais inválidas.'); return res.json(); })
+        .then(data => {
+            localStorage.setItem('access_token', data.access);
+            localStorage.setItem('refresh_token', data.refresh);
+            modalLogin.style.display = 'none';
+            carregarPerfil(data.access);
+        })
+        .catch(err => { erroDiv.textContent = err.message; erroDiv.style.display = 'block'; });
+    });
+
+    // Requisição GET assíncrona para puxar os dados existentes no Perfil
+    function carregarPerfil(token) {
+        fetch(API_BASE + '/api/perfil/', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(res => {
+            if (!res.ok) {
+                localStorage.clear();
+                modalLogin.style.display = 'block';
+                throw new Error('Sessão expirada.');
+            }
+            return res.json();
+        })
+        .then(perfil => {
+            document.getElementById('edit-nome').value = perfil.nome || '';
+            document.getElementById('edit-descricao').value = perfil.descricao || '';
+            document.getElementById('edit-curso').value = perfil.curso || '';
+            document.getElementById('edit-periodo').value = perfil.periodo || '';
+            document.getElementById('edit-email').value = perfil.email || '';
+            document.getElementById('edit-git').value = perfil.git || '';
+            document.getElementById('edit-linked').value = perfil.linked || '';
+            document.getElementById('edit-url_imagem').value = perfil.url_imagem || '';
+
+            document.getElementById('edit-sucesso').style.display = 'none';
+            document.getElementById('edit-erro').style.display = 'none';
+            modalEditar.style.display = 'block';
+        })
+        .catch(err => console.error(err));
+    }
+
+    // Salvar as Alterações de dados (Dispara o método PUT na API)
+    document.getElementById('btn-salvar').addEventListener('click', function() {
+        const token = localStorage.getItem('access_token');
+        const dados = {
+            nome: document.getElementById('edit-nome').value,
+            descricao: document.getElementById('edit-descricao').value,
+            curso: document.getElementById('edit-curso').value,
+            periodo: document.getElementById('edit-periodo').value,
+            email: document.getElementById('edit-email').value,
+            git: document.getElementById('edit-git').value,
+            linked: document.getElementById('edit-linked').value,
+            url_imagem: document.getElementById('edit-url_imagem').value,
+        };
+
+        fetch(API_BASE + '/api/perfil/', {
+            method: 'PUT',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        })
+        .then(res => { if (!res.ok) throw new Error('Erro ao salvar os dados.'); return res.json(); })
+        .then(perfil => {
+            document.getElementById('edit-sucesso').style.display = 'block';
+            // Atualiza a página após o sucesso para sincronizar o HTML estático do Django
+            setTimeout(() => { location.reload(); }, 1200);
+        })
+        .catch(err => {
+            const errDiv = document.getElementById('edit-erro');
+            errDiv.textContent = err.message;
+            errDiv.style.display = 'block';
+        });
+    });
+
+    // Eventos de Fechamento de Tela
+    document.getElementById('btn-cancelar-login').addEventListener('click', () => modalLogin.style.display = 'none');
+    document.getElementById('btn-cancelar-editar').addEventListener('click', () => modalEditar.style.display = 'none');
+    </script>
 </body>
 </html>

@@ -21,12 +21,21 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+# Importa a view do seu app de portfólio:
+from portfolio import views as portfolio_views
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', include('portfolio.urls')),
 
+    # Endpoints da API de Tarefas
     path('api/tarefas/', include('tarefas.urls')),
+
+    # 2. ADICIONE A ROTA DA API DO PERFIL AQUI:
+    path('api/perfil/', portfolio_views.PerfilDetail.as_view(), name='perfil-api'),
+
+    # Autenticação JWT
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
