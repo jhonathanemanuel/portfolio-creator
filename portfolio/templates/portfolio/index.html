@@ -34,6 +34,84 @@
             <a class="navbar-brand" href="#">🚀 DevShowcase</a>
             <div class="ms-auto">
                 {% if user.is_authenticated %}
+                    <div class="sino-container" style="position: relative; display: inline-block; margin-left: 15px;">
+                        <button id="sino-btn" style="background: none; border: none; font-size: 1.3em; cursor: pointer; color: white;">
+                            🔔 <span id="sino-badge" class="badge bg-secondary">X</span>
+                        </button>
+
+                        <div id="notif-dropdown" style="display: none; position: absolute; right: 0; top: 35px; width: 280px; background: white; border: 1px solid #ccc; border-radius: 5px; z-index: 3000; max-height: 300px; overflow-y: auto; color: black; box-shadow: 0px 4px 8px rgba(0,0,0,0.1);">
+                            <div style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee; background: #f8f9fa;">Notificações</div>
+                            <div id="notif-lista" style="padding: 5px; font-size: 0.9em;"></div>
+                        </div>
+                    </div>
+
+                    <script>
+                    (function() {
+                        const MS_URL = '{{ NOTIFICACAO_MS_URL }}';
+                        const API_KEY = '{{ NOTIFICACAO_MS_API_KEY }}';
+                        const USER_ID = '{{ NOTIFICACAO_USER_ID }}';
+
+                        const sinoBtn = document.getElementById('sino-btn');
+                        const sinoBadge = document.getElementById('sino-badge');
+                        const dropdown = document.getElementById('notif-dropdown');
+                        const notifLista = document.getElementById('notif-lista');
+
+                        const headers = { 'X-Api-Key': API_KEY, 'X-User-Id': USER_ID };
+
+                        // 1. Contador assíncrono (Polling)
+                        function buscarContagem() {
+                            fetch(MS_URL + '/api/notificacoes/nao-lidas/', { headers: headers })
+                                .then(res => { if(!res.ok) throw new Error(); return res.json(); })
+                                .then(data => {
+                                    sinoBadge.textContent = data.count;
+                                    sinoBadge.className = data.count === 0 ? "badge bg-success" : "badge bg-danger";
+                                })
+                                .catch(() => {
+                                    sinoBadge.textContent = 'X';
+                                    sinoBadge.className = "badge bg-secondary";
+                                });
+                        }
+
+                        // 2. Buscar Mensagens ao clicar no Sino
+                        sinoBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            if (dropdown.style.display === 'block') {
+                                dropdown.style.display = 'none';
+                            } else {
+                                dropdown.style.display = 'block';
+                                fetch(MS_URL + '/api/notificacoes/', { headers: headers })
+                                    .then(res => res.json())
+                                    .then(notifs => {
+                                        if(notifs.length === 0) {
+                                            notifLista.innerHTML = '<div style="padding:10px; color:#888;">Nenhuma mensagem.</div>';
+                                            return;
+                                        }
+                                        notifLista.innerHTML = notifs.map(n => `
+                                            <div class="p-2 border-bottom notif-item" data-id="${n.id}" style="cursor:pointer; background: ${n.is_read ? '#fff' : '#eef6ff'}">
+                                                <p class="m-0">${n.mensagem}</p>
+                                                <small class="text-muted" style="font-size:0.75em;">${n.is_read ? '✓ Lida' : '🔵 Marcar como lida'}</small>
+                                            </div>
+                                        `).join('');
+
+                                        // 3. Evento para marcar como lida ao clicar na mensagem
+                                        notifLista.querySelectorAll('.notif-item').forEach(item => {
+                                            item.addEventListener('click', function() {
+                                                const id = this.getAttribute('data-id');
+                                                fetch(`${MS_URL}/api/notificacoes/${id}/lida/`, { method: 'PATCH', headers: headers })
+                                                    .then(() => { buscarContagem(); dropdown.style.display = 'none'; });
+                                            });
+                                        });
+                                    });
+                            }
+                        });
+
+                        document.addEventListener('click', () => dropdown.style.display = 'none');
+
+                        // Executa imediatamente e repete a cada 5 segundos
+                        buscarContagem();
+                        setInterval(buscarContagem, 5000);
+                    })();
+                    </script>
                     <span class="text-light me-3">Olá, {{ user.username }}</span>
                     <a href="{% url 'dashboard' %}" class="btn btn-outline-info btn-sm">Meu Dashboard</a>
                     <form action="{% url 'logout' %}?next={% url 'index' %}" method="post" style="display:inline;">
